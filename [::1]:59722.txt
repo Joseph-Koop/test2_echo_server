@@ -1,1 +1,0 @@
-string(buf[:n])string(buf[:n])

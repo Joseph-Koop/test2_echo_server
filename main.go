@@ -13,6 +13,7 @@ import(
 	"strconv"
 	"time"
 	"os"
+	//"unicode/utf8"
 	//"io/ioutil"
 )
 
@@ -59,11 +60,27 @@ func handleConnection(conn net.Conn){
 			fmt.Println("Error reading from client:", err)
 			return
 		}
-		_, err = conn.Write(buf[:n])
+
+		//Clean data
+		stringData := string(buf[:n])
+		fmt.Println(stringData)
+		runeData := []rune(stringData)
+		fmt.Println(runeData)
+		var newData []rune
+		lastDigit := ' '
+		for i := 0; i < len(runeData); i++ {
+			if(lastDigit != ' ' || runeData[i] != lastDigit){
+				newData = append(newData, runeData[i])
+			}
+			lastDigit = runeData[i]
+		}
+		fmt.Println(newData)
+
+		_, err = conn.Write([]byte(string(newData)))
 		if err != nil{
 			fmt.Println("Error writing to client:", err)
 		}
-		_, err = file.WriteString(fmt.Sprintf(string(buf[:n])))
+		_, err = file.WriteString(string(newData))
 		if err != nil{
 			fmt.Println("Error writing to client log file:", err)
 		}

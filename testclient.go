@@ -1,3 +1,6 @@
+//testclieng.go
+//Purpose: tests if the server trims white space and respects new lines.
+
 package main
 
 import(
@@ -13,7 +16,7 @@ func main(){
 	}
 	defer conn.Close()
 
-	fmt.Fprint(conn, "      Hello     \n jiejfeijf    \n   je")
+	fmt.Fprint(conn, "      Hello     \njiejfeijf    \n   je")
 	time.Sleep(1 * time.Second)
 
 	buf := make([]byte, 1024)
