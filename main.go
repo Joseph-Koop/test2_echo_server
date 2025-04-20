@@ -11,6 +11,7 @@ import(
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 	"os"
 	//"unicode/utf8"
@@ -42,7 +43,7 @@ func main(){
 	}
 }
 
-func handleConnection(conn net.Conn, personality.Bool){
+func handleConnection(conn net.Conn, personality bool){
 	fileName := conn.RemoteAddr().String() + ".txt"
 	file, err := os.Create(fileName)
 	if err != nil {
@@ -97,15 +98,57 @@ func handleConnection(conn net.Conn, personality.Bool){
 			lastDigit = runeData[i]
 		}
 
-		dataS = string(newData)
+		dataS := string(newData)
 
-		
+		checkData := strings.TrimSpace(dataS)
+		checkData = strings.ToLower(checkData)
 
+		if(strings.HasPrefix(checkData, "/")){
+			parts := strings.SplitN(checkData, " ", 2)
+			switch parts[0]{
+				case "/time":
+					dataS = string(timestamp()) + "\n"
+				case "/quit":
+					fmt.Println("Client terminated the connection")
+					conn.Close()
+					return
+				case "/echo":
+					if len(parts) > 1{
+						dataS = parts[1] + "\n"
+					}else{
+						dataS = "\n"
+					}
+				default:
+					dataS = parts[0] + " is not recognized as a command\n"
+			}
+		}else if(personality == true){
+			switch checkData{
+				case " ", "":
+					dataS = "Start yapping . . .  \n"
+				case "exam", "test", "quiz", "homework", "assignment", "project":
+					dataS = "####\n"
+				case "exit", "close", "bye":
+					_, err = conn.Write([]byte("Farewell!"))
+					if err != nil{
+						fmt.Println("Error writing to client:", err)
+					}
+
+					fmt.Println("Client terminated the connection")
+					conn.Close()
+					return
+				default:
+					dataS = dataS
+			}
+		}
+
+		//dataS += "/n"
+
+		fmt.Println("Message: ", strings.TrimSpace(dataS))
 		_, err = conn.Write([]byte(dataS))
 		if err != nil{
 			fmt.Println("Error writing to client:", err)
 		}
-		_, err = file.WriteString(string(newData))
+		_, err = file.WriteString(string(dataS))
 		if err != nil{
 			fmt.Println("Error writing to client log file:", err)
 		}
