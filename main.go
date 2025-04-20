@@ -53,6 +53,7 @@ func handleConnection(conn net.Conn){
 	defer fmt.Println(timestamp(), "Connection terminated with ", conn.RemoteAddr().String())
 	defer conn.Close()
 	buf := make([]byte, 1024)
+	totalBytesRead := 0
 
 	for{
 		n, err := conn.Read(buf)
@@ -61,20 +62,31 @@ func handleConnection(conn net.Conn){
 			return
 		}
 
+		totalBytesRead += n
+		if(totalBytesRead > 1024){
+			n = 1024 - (totalBytesRead - n)
+			buf = buf[:n]
+			totalBytesRead = 1024
+		}
+
 		//Clean data
 		stringData := string(buf[:n])
-		fmt.Println(stringData)
 		runeData := []rune(stringData)
-		fmt.Println(runeData)
 		var newData []rune
+		count := 0
 		lastDigit := ' '
 		for i := 0; i < len(runeData); i++ {
-			if(lastDigit != ' ' || runeData[i] != lastDigit){
-				newData = append(newData, runeData[i])
+			if lastDigit != ' ' || runeData[i] != lastDigit {
+				//runeBites := utf8.RuneLen(runeData[i])
+				//count += runeBites
+				if count <= 1024 {
+					newData = append(newData, runeData[i])
+				}else{
+					break;
+				}
 			}
 			lastDigit = runeData[i]
 		}
-		fmt.Println(newData)
 
 		_, err = conn.Write([]byte(string(newData)))
 		if err != nil{
