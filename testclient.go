@@ -1,4 +1,4 @@
-//testclieng.go
+//testclient.go
 //Purpose: tests if the server trims white space and respects new lines.
 
 package main
@@ -10,7 +10,7 @@ import(
 )
 
 func main(){
-	conn, err := net.Dial("tcp", "localhost:4000")			//assumes the server is running on port 4000
+	conn, err := net.Dial("tcp", "localhost:3000")			//assumes the server is running on port 4000
 	if err != nil {
 		panic(err)
 	}

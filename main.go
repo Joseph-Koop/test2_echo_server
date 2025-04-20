@@ -1,8 +1,4 @@
-//go run main.go
-//nc localhost 4000
-
-//Delete text files at start of program
-//there are still panics if bad port number
+//main.go
 
 package main
 
@@ -14,11 +10,10 @@ import(
 	"strings"
 	"time"
 	"os"
-	//"unicode/utf8"
-	//"io/ioutil"
 )
 
 func main(){
+	//Port command line flag
 	portPtr := flag.Int("port", 4000, "The port the server will run on.")
 	personalityPtr := flag.Bool("personality", true, "Enables customized responses to specific requests.")
 	flag.Parse()
@@ -39,6 +34,7 @@ func main(){
 			continue
 		}
 		fmt.Println(timestamp(), "Connection established with ", conn.RemoteAddr().String())
+		//Concurrency
 		go handleConnection(conn, *personalityPtr);
 	}
 }
@@ -52,26 +48,23 @@ func handleConnection(conn net.Conn, personality bool){
 		defer file.Close()
 	}
 
+	//Logging connections/disconnections
 	defer fmt.Println(timestamp(), "Connection terminated with ", conn.RemoteAddr().String())
 	defer conn.Close()
+
 	buf := make([]byte, 1024)
 	totalBytesRead := 0
 
 	for{
-		//timer := time.NewTimer(30 * time.Second)
-
-		//<-timer.C
-		//fmt.Println("Client disconnected due to inactivity")
-		//conn.Close()
-
+		//Inactivity timeout
 		conn.SetReadDeadline(time.Now().Add(30 * time.Second))
 		n, err := conn.Read(buf)
-		//timer.Stop()
 		if err != nil{
 			fmt.Println("Client disconnected due to inactivity or other error")
 			return
 		}
 
+		//Overflow protection
 		totalBytesRead += n
 		if(totalBytesRead > 1024){
 			n = 1024 - (totalBytesRead - n)
@@ -79,21 +72,14 @@ func handleConnection(conn net.Conn, personality bool){
 			totalBytesRead = 1024
 		}
 
-		//Clean data
+		//Trim and clean
 		stringData := string(buf[:n])
 		runeData := []rune(stringData)
 		var newData []rune
-		count := 0
 		lastDigit := ' '
 		for i := 0; i < len(runeData); i++ {
 			if lastDigit != ' ' || runeData[i] != lastDigit {
-				//runeBites := utf8.RuneLen(runeData[i])
-				//count += runeBites
-				if count <= 1024 {
-					newData = append(newData, runeData[i])
-				}else{
-					break;
-				}
+				newData = append(newData, runeData[i])
 			}
 			lastDigit = runeData[i]
 		}
@@ -103,6 +89,7 @@ func handleConnection(conn net.Conn, personality bool){
 		checkData := strings.TrimSpace(dataS)
 		checkData = strings.ToLower(checkData)
 
+		//Command protocols
 		if(strings.HasPrefix(checkData, "/")){
 			parts := strings.SplitN(checkData, " ", 2)
 			switch parts[0]{
@@ -121,6 +108,7 @@ func handleConnection(conn net.Conn, personality bool){
 				default:
 					dataS = parts[0] + " is not recognized as a command\n"
 			}
+		//Specialized words
 		}else if(personality == true){
 			switch checkData{
 				case " ", "":
@@ -141,13 +129,14 @@ func handleConnection(conn net.Conn, personality bool){
 			}
 		}
 
-		//dataS += "/n"
-
+		//Proper error handling: no panics or crashes
 		fmt.Println("Message: ", strings.TrimSpace(dataS))
 		_, err = conn.Write([]byte(dataS))
 		if err != nil{
 			fmt.Println("Error writing to client:", err)
 		}
+
+		//Logging and saving messages
 		_, err = file.WriteString(string(dataS))
 		if err != nil{
 			fmt.Println("Error writing to client log file:", err)
