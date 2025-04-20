@@ -19,6 +19,7 @@ import(
 
 func main(){
 	portPtr := flag.Int("port", 4000, "The port the server will run on.")
+	personalityPtr := flag.Bool("personality", true, "Enables customized responses to specific requests.")
 	flag.Parse()
 
 	var portString string = ":" + strconv.Itoa(*portPtr)
@@ -37,11 +38,11 @@ func main(){
 			continue
 		}
 		fmt.Println(timestamp(), "Connection established with ", conn.RemoteAddr().String())
-		go handleConnection(conn);
+		go handleConnection(conn, *personalityPtr);
 	}
 }
 
-func handleConnection(conn net.Conn){
+func handleConnection(conn net.Conn, personality.Bool){
 	fileName := conn.RemoteAddr().String() + ".txt"
 	file, err := os.Create(fileName)
 	if err != nil {
@@ -96,7 +97,11 @@ func handleConnection(conn net.Conn){
 			lastDigit = runeData[i]
 		}
 
-		_, err = conn.Write([]byte(string(newData)))
+		dataS = string(newData)
+
+		
+
+		_, err = conn.Write([]byte(dataS))
 		if err != nil{
 			fmt.Println("Error writing to client:", err)
 		}
