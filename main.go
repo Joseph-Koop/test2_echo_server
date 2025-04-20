@@ -56,9 +56,17 @@ func handleConnection(conn net.Conn){
 	totalBytesRead := 0
 
 	for{
+		//timer := time.NewTimer(30 * time.Second)
+
+		//<-timer.C
+		//fmt.Println("Client disconnected due to inactivity")
+		//conn.Close()
+
+		conn.SetReadDeadline(time.Now().Add(30 * time.Second))
 		n, err := conn.Read(buf)
+		//timer.Stop()
 		if err != nil{
-			fmt.Println("Error reading from client:", err)
+			fmt.Println("Client disconnected due to inactivity or other error")
 			return
 		}
 
